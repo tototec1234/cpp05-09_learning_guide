@@ -87,12 +87,11 @@ flowchart LR
     creators -->|"new"| concrete
     concrete -->|"upcast"| aform
     makeForm -->|"AForm* or NULL"| main
-
-    main -->|"AForm&"| sign
+    main -->|"if form != NULL / AForm&"| sign
     sign -->|"beSigned"| aform
-    main -->|"AForm const&"| exec
+    main -->|"if form != NULL / AForm const&"| exec
     exec -->|"execute"| aform
-    main --> delete_node
+    main -->|"if form != NULL"| delete_node
     delete_node -->|"virtual ~AForm"| aform
 
     style main fill:#4A90D9,stroke:#2E5A8B,color:#fff
