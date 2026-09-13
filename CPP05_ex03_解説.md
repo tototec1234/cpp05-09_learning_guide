@@ -10,6 +10,8 @@
 ---
 ---
 
+<a id="intern-role"></a>
+
 ## 1.  Intern クラスがあると何が便利？
 
 > **課題書原文**
@@ -40,6 +42,8 @@ IRC の B 層で、コマンド名からハンドラを選ぶ dispatcher と同�
 
 ---
 
+<a id="forbidden-if-chain"></a>
+
 ## 2. 課題が拒否する形
 
 > **課題書原文**
@@ -62,6 +66,8 @@ else
 ```
 
 ---
+
+<a id="form-creator-table"></a>
 
 ## 3. Form名と生成関数を対応させる
 
@@ -134,6 +140,8 @@ makeForm(name, target):
 書類の種類を足すときは、生成関数を用意し、`forms` に対応する1行を追加する。
 </details>
 
+<a id="unknown-form-name"></a>
+
 > **課題書原文**
 >
 > It should print something like:  
@@ -143,6 +151,8 @@ makeForm(name, target):
 この箇所は、生成に成功した場合の出力と、指定されたForm名が存在しない場合のエラー出力を定めている。
 
 ---
+
+<a id="form-name-keys"></a>
 
 ## 4. キー文字列
 
@@ -170,7 +180,11 @@ rrf = someRandomIntern.makeForm("robotomy request", "Bender");
 
 ---
 
+<a id="ownership"></a>
+
 ## 5. 所有権
+
+<a id="null-handling"></a>
 
 ```
 AForm *f = intern.makeForm("robotomy request", "Bender");
@@ -188,6 +202,8 @@ Intern は状態を持たない。コピーも代入も「何もしない」で 
 
 ---
 
+<a id="tests"></a>
+
 ## 6. テスト
 
 > **課題書原文**
@@ -204,6 +220,8 @@ Intern は状態を持たない。コピーも代入も「何もしない」で 
 - Intern をコピーしても `makeForm` が同じように動く
 
 ---
+
+<a id="module-review"></a>
 
 ## 7. モジュール全体の振り返り
 
