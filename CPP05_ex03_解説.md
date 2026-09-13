@@ -2,25 +2,53 @@
 
 提出物: ex02 まで + `Intern.hpp` / `Intern.cpp`  
 官僚は書類の種類を `new` しなくてよくなる。文字列を Intern に渡す。
+## 関連図
+
+- [クラス関係図](CPP05_ex03_class_overview_diagram.md) — Intern、AForm、具体Form、Bureaucratの関係
+- [データフロー図](CPP05_ex03_data_flow_diagram.md) — Formの生成から署名・実行・破棄までの流れ
 
 ---
+---
 
-## 1. なぜ Intern が分かれているか
+## 1.  Intern クラスがあると何が便利？
+
+> **課題書原文**
+>
+> Since filling out forms all day would be too cruel for our bureaucrats, interns exist to take on this tedious task. In this exercise, you must implement the Intern class. The intern has no name, no grade, and no unique characteristics. The only thing bureaucrats care about is that they do their job.
+
+この段落は、`Intern` が追加された背景と、`Intern` が固有の状態を持たず、仕事を実行するために存在することを説明している。
 
 ```
 ex02: main が ShrubberyCreationForm f("home"); と型を直接書く
 ex03: Intern が "shrubbery creation" から AForm* を返す
 ```
 
-呼び出し側は具体型のヘッダを知らなくてよい、わけではない（リンクは必要）。  
-意図は、**生成規則を一箇所に閉じる**こと。種類を足すとき、直す場所が Intern になる。
+> **課題書原文**
+>
+> However, the intern has one key ability: the makeForm() function. This function takes two strings as parameters: the first one represents the name of a form, and the second one represents the target of the form. It returns a pointer to a AForm object (corresponding to the form name passed as a parameter), with its target initialized to the second parameter.
 
-IRC の B 層で、コマンド名からハンドラを選ぶdispatcher と同じ問題である。  
-if/else の森は、種類が増えるたびに分岐が伸び、読み手が条件を追い切れなくなる。
+この段落は、`makeForm()` の2つの引数、戻り値、および生成するFormのtargetを定めている。
+
+- Internクラスに仕事を任せれば、呼び出し側（`main`）は、`ShrubberyCreationForm` などの具体型を直接 `new` しなくてよくなる。
+	-`Intern` くんに書類名の文字列を渡し、返ってきた `AForm*` を使えばよい。  
+
+- 便利さの核は、隠蔽ではない。
+	- **書類名の文字列と、どの具体型を生成するかという対応（生成規則）を、`Intern` 一箇所にまとめて書く**ことで利便性が向上する。
+	- 書類の種類を足すとき、呼び出し側の分岐を増やすのではなく、書き足す場所が `Intern` になる。
+
+IRC の B 層で、コマンド名からハンドラを選ぶ dispatcher と同じ問題である。  
 
 ---
 
 ## 2. 課題が拒否する形
+
+> **課題書原文**
+>
+> You must avoid unreadable and messy solutions, such as using an excessive if/el-seif/else structure. This kind of approach will not be accepted during the evaluation process. You’re not in the Piscine (pool) anymore.
+
+この段落は、過剰な `if/el-seif/else` を使った読みにくい実装が評価では認められないことを明記している。
+
+if/else の森は、種類が増えるたびに分岐が伸び、読み手が条件を追い切れなくなる。
 
 ```
 if (name == "shrubbery creation")
@@ -33,51 +61,104 @@ else
     エラー
 ```
 
-3個なら動く。課題は「Piscine ではない」と書いて拒否する。  
-評価者は構造を見る。動くことと通ることは別。
-
 ---
 
-## 3. 許可される骨格（疑似コード）
+## 3. Form名と生成関数を対応させる
 
-関数ポインタの表。コンテナではない。C の配列。
+書類名の配列と、生成関数の配列を同じ順番で用意する。  
+この課題の範囲では、コンテナを使わず、C の配列で書く。
 
-```
+```cpp
 型 FormCreator = AForm* (*)(string const & target)
 
 createShrubbery(target):  return new ShrubberyCreationForm(target)
 createRobotomy(target):   return new RobotomyRequestForm(target)
 createPardon(target):     return new PresidentialPardonForm(target)
 
-表:
+文字列 formNames[]:
+  "shrubbery creation"
+  "robotomy request"
+  "presidential pardon"
+
+FormCreator creators[]:
+  createShrubbery
+  createRobotomy
+  createPardon
+
+makeForm(name, target):
+    i を 0 から formNames の要素数未満:
+        if name == formNames[i]:
+            出力 Intern creates <form>
+            return creators[i](target)
+    明確なエラーメッセージ
+    return NULL   # または throw
+```
+
+`formNames[i]` と `creators[i]` は、同じ添字で対応する。  
+書類の種類を足すときは、両方の配列に同じ位置で要素を追加する。
+
+過去のレビューコメント（提出者不明）: 配列でも足りるが、構造体で名前と処理を組にした方が分かりやすい。
+<details>
+
+<summary>構造体で書いた場合（クリックで表示）</summary>
+
+名前と生成関数を `struct` で一組にし、その構造体を C の配列に並べる。  
+この課題の範囲では、コンテナを使わない。
+
+```cpp
+型 FormCreator = AForm* (*)(string const & target)
+
+struct FormInfo:
+    文字列 name
+    FormCreator creator
+
+createShrubbery(target):  return new ShrubberyCreationForm(target)
+createRobotomy(target):   return new RobotomyRequestForm(target)
+createPardon(target):     return new PresidentialPardonForm(target)
+
+FormInfo forms[]:
   { "shrubbery creation",   createShrubbery }
   { "robotomy request",     createRobotomy }
   { "presidential pardon",  createPardon }
 
 makeForm(name, target):
-    i を 0 から表の長さ未満:
-        if name == 表[i].文字列:
+    i を 0 から forms の要素数未満:
+        if name == forms[i].name:
             出力 Intern creates <form>
-            return 表[i].関数(target)
+            return forms[i].creator(target)
     明確なエラーメッセージ
     return NULL   # または throw
 ```
 
-`switch` を使うなら、名前照合で得た index に対して1回だけ。  
-名前ごとに `case` を並べて `new` するだけなら、if/else と同じ読みにくさ、と評価者が判断することがある。  
-表に名前と生成関数を並べる方が、「種類を足す = 行を1行足す」と説明できる。
+`FormInfo` の1要素が、書類名と、その書類を作る関数の対応を表す。  
+書類の種類を足すときは、生成関数を用意し、`forms` に対応する1行を追加する。
+</details>
 
-過去のレビューコメント（提出者不明）: 配列でも足りるが、構造体で名前と処理を組にした方が分かりやすい。
+> **課題書原文**
+>
+> It should print something like:  
+> `Intern creates <form>`  
+> If the provided form name does not exist, print an explicit error message.
+
+この箇所は、生成に成功した場合の出力と、指定されたForm名が存在しない場合のエラー出力を定めている。
 
 ---
 
 ## 4. キー文字列
 
-課題書の例:
+> **課題書原文**
+>
+> For example, the following code creates a RobotomyRequestForm targeted at "Bender":
 
-```
+```cpp
+{
+Intern someRandomIntern;
+AForm* rrf;
 rrf = someRandomIntern.makeForm("robotomy request", "Bender");
+}
 ```
+
+この例は、`"robotomy request"` が `RobotomyRequestForm` に対応するForm名であり、`"Bender"` がtargetであることを示している。
 
 キーは次で揃えるのが安全である。
 
@@ -108,6 +189,12 @@ Intern は状態を持たない。コピーも代入も「何もしない」で 
 ---
 
 ## 6. テスト
+
+> **課題書原文**
+>
+> As usual, you must test everything to ensure it works as expected.
+
+この文は、実装したすべての動作をテストするよう求めている。
 
 - 例と同じ `"robotomy request", "Bender"`
 - 残る2種のキー
