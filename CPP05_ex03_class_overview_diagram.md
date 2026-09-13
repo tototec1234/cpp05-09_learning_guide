@@ -63,7 +63,7 @@ classDiagram
     class AForm {
         <<Abstract Form>>
         +beSigned(bureaucrat)
-        +execute(executor)*
++execute(executor)
         #executeEachForm(executor)*
     }
 
