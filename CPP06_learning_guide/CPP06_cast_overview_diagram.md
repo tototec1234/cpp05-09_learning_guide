@@ -1,33 +1,39 @@
 # キャスト選択図 — CPP06
 
-> 用途: 変換の目的から、検討するキャストを選ぶ  
-> 注意: キャストを選んだ後も、値域、寿命、型関係を別に確認する
+> 用途: 変換の目的から、検討するキャストを選ぶ （一般的な用途でなく、CPP06を解くことに特化しています）
 
 ## 選択フロー
-
 ```mermaid
 flowchart TD
-    start["何を変換するか"] --> scalar{"数値・文字などの<br/>値を別の型へ変換？"}
-    scalar -->|はい| static["static_cast"]
-    scalar -->|いいえ| pointerInt{"ポインタと整数の間など<br/>低水準の表現変換？"}
-    pointerInt -->|はい| reinterpret["reinterpret_cast"]
-    pointerInt -->|いいえ| hierarchy{"継承階層内で<br/>実際の型を検査？"}
-    hierarchy -->|はい| dynamic["dynamic_cast"]
-    hierarchy -->|いいえ| cv{"const / volatile<br/>だけを変更？"}
-    cv -->|はい| constcast["const_cast"]
-    cv -->|いいえ| redesign["キャスト以外の設計を検討"]
+    start["何を変換したいか？"] --> isCV{"1. const / volatile の<br/>脱着のみが目的か？"}
+    
+    isCV -->|はい| constcast["const_cast<br/>【cv修飾の変更】"]
+    isCV -->|いいえ| isValue{"2. 対象はスカラー値そのものか？<br/>(char, int, float, double 等)"}
+    
+    isValue -->|はい| staticScalar["static_cast<br/>【ex00: 値表現の変換・昇格】"]
+    isValue -->|いいえ| isDynamic{"3. 多態的（仮想関数を持つ）型の<br/>ダウンキャスト/実行時型検査か？"}
+    
+    isDynamic -->|はい| dynamic["dynamic_cast<br/>【ex02: 安全な型識別】"]
+    isDynamic -->|いいえ| isLowLevel{"4. ポインタ ↔ 整数、または<br/>無関係なポインタ同士のビット再解釈か？"}
+    
+    isLowLevel -->|はい| reinterpret["reinterpret_cast<br/>【ex01: アドレスの整数化・再解釈】"]
+    isLowLevel -->|いいえ| isSafePtr{"5. 言語仕様で保証された安全なポインタ変換か？<br/>(void* ↔ T*, 明示的アップキャスト等)"}
+    
+    isSafePtr -->|はい| staticPtr["static_cast<br/>【[発展] 安全なポインタ操作】"]
+    isSafePtr -->|いいえ| redesign["キャスト以外の設計を検討<br/>(暗黙変換、インターフェース再設計)"]
 
-    static --> staticCheck["変換先の値域を確認<br/>範囲外ならキャストしない"]
-    reinterpret --> reinterpretCheck["整数型の幅・同一プロセス・<br/>オブジェクト寿命を確認"]
-    dynamic --> dynamicCheck["基底型がpolymorphicか確認<br/>失敗経路を処理"]
-    constcast --> constCheck["元からconstの対象を<br/>書き換えない"]
+    %% 検証ステップ
+    staticScalar --> checkStatic["【事前/事後確認】<br/>値域・オーバーフローの検査<br/>(ex00: impossible / nan / inf)"]
+    dynamic --> checkDynamic["【事前/事後確認】<br/>基底クラスに仮想デストラクタがあるか<br/>ポインタ: NULL検査 / 参照: bad_cast捕捉"]
+    reinterpret --> checkReinterpret["【事前/事後確認】<br/>整数型の幅 (uintptr_t)<br/>アライメント保証・オブジェクト寿命"]
+    constcast --> checkConst["【事前/事後確認】<br/>元オブジェクトがconst定義なら<br/>書き込み厳禁（未定義動作防止）"]
 
-    style static fill:#4A90D9,stroke:#2E5A8B,color:#fff
+    style staticScalar fill:#4A90D9,stroke:#2E5A8B,color:#fff
     style reinterpret fill:#D9822B,stroke:#9A5A1E,color:#fff
     style dynamic fill:#50B878,stroke:#3A8A5A,color:#fff
     style constcast fill:#8E6BBE,stroke:#62468B,color:#fff
+    style staticPtr fill:#4A90D9,stroke:#2E5A8B,color:#fff
 ```
-
 ## CPP06での対応
 
 | キャスト | exercise | 対象 | キャストが保証しないこと |
@@ -56,3 +62,4 @@ object slicing
 ```
 
 ポインタまたは参照のupcastではobject slicingは起きない。
+
