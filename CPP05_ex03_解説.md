@@ -6,6 +6,8 @@
 
 - [クラス関係図](CPP05_ex03_class_overview_diagram.md) — Intern、AForm、具体Form、Bureaucratの関係
 - [データフロー図](CPP05_ex03_data_flow_diagram.md) — Formの生成から署名・実行・破棄までの流れ
+- [設計比喩](CPP05_ex03_設計比喩.md) — Intern／Bureaucrat／main の役割分担（結合度・所有権・IRCとの短い対応表）
+- [ex02→ex03「28Bじゃなくて28C」](CPP05_ex02_ex03_form28B_not_28C.md) — インターンなしの取り違えと Intern 窓口化の対比
 
 ---
 ---
