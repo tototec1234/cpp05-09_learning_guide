@@ -184,14 +184,15 @@ Animal *animal = new Dog();
 animal->makeSound(); // Dog::makeSound()
 ```
 
-CPP05 ex02「No, you need form 28B, not 28C...」では、同じ仕組みを`AForm`と具体Formに適用する。
+CPP05 ex02「No, you need form 28B, not 28C...」では、同じ仕組みを`AForm`と具体Formに適用する。ただし、多態的に選ばれる関数は一段深い位置にある。
 
 ```cpp
 AForm *form = new RobotomyRequestForm("Bender");
-form->execute(bureaucrat);
+form->execute(bureaucrat); // AForm::execute()が共通の確認を行い、
+                           // RobotomyRequestForm::executeEachForm()を呼ぶ
 ```
 
-`form`の変数型は`AForm*`だが、具体的な処理は`RobotomyRequestForm`側の実装が担当する。
+`form`の変数型は`AForm*`だが、具体的な処理は`RobotomyRequestForm`側の実装が担当する。`execute()`自体は非`virtual`であり、派生クラスへ委ねるのは`executeEachForm()`だけである（5.3参照）。
 
 <a id="review-abstract"></a>
 ### 3.4 抽象クラス
@@ -201,7 +202,7 @@ form->execute(bureaucrat);
 ```cpp
 class AForm {
 protected:
-    virtual void executeAction() const = 0;
+    virtual void executeEachForm() const = 0;
 };
 ```
 
@@ -415,6 +416,10 @@ AForm::execute()
 ```
 
 署名と等級の確認を各具体Formへ重複して書くこともできるが、一つの派生クラスだけ確認を忘れる可能性がある。共通処理を`AForm`へ置くと、すべての具体Formへ同じ条件を適用できる。
+
+このとき`AForm::execute()`自体には`virtual`を付けない。付けると派生クラスが`execute()`を上書きして確認を丸ごと省けるため、共通処理を基底へ置いた意味がなくなる。派生クラスへ開くのは、確認のあとに呼ばれる純粋仮想関数だけである。
+
+例外を送出する位置と多態性の関係は、`CPP05_ex02_解説.md`の3節「例外と多態性が交差する3点」で扱う。
 
 <details>
 <summary>参考資料（クリックで表示）</summary>
